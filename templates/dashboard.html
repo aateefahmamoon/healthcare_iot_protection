@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IoT Healthcare Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        .icon-btn {
+            display: inline-block;
+            margin: 20px;
+            text-decoration: none;
+            color: #333;
+        }
+        .icon {
+            font-size: 60px; /* Medium sized emoji */
+        }
+        .label {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>IoT Healthcare Data Dashboard</h1>
+    <div>
+        <a href="{{ url_for('view_dataset', category='vitals') }}" class="icon-btn">
+            <div class="icon">❤️</div>
+            <div class="label">Vital Signs</div>
+        </a>
+        <a href="{{ url_for('view_dataset', category='careplan') }}" class="icon-btn">
+            <div class="icon">📝</div>
+            <div class="label">Care Plan</div>
+        </a>
+        <a href="{{ url_for('view_dataset', category='medication') }}" class="icon-btn">
+            <div class="icon">💊</div>
+            <div class="label">Medication</div>
+        </a>
+        <a href="{{ url_for('view_dataset', category='devices') }}" class="icon-btn">
+            <div class="icon">📱</div>
+            <div class="label">Devices</div>
+        </a>
+    </div>
+</body>
+</html>
