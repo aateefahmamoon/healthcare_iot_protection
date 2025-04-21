@@ -1,20 +1,160 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+import pickle
+import numpy as np
+import datetime
 import pandas as pd
-from encryption import encrypt_data, decrypt_data
+import random
+import json
+import os
+from cryptography.fernet import Fernet
+from encryption import init_encryption, encrypt_data, decrypt_data
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Required for session management
 
-# Global dictionary to hold encrypted datasets for each category
+# Generate decryption key and encryption cipher ONCE at server start
+DECRYPTION_KEY = str(random.randint(100000, 999999))
+FERNET_KEY = Fernet.generate_key()
+init_encryption(DECRYPTION_KEY, FERNET_KEY)
+
+print(f"\n🔑 Your decryption key (DO NOT SHARE): {DECRYPTION_KEY}\n")
+
+# Load the trained ML model
+with open('intrusion_model.pkl', 'rb') as f:
+    model = pickle.load(f)
+
+# Sample user database (username, password, role)
+users = {
+    "admin": {"password": "admin123", "role": "admin"},
+    "user1": {"password": "userpass1", "role": "user"},
+    "user2": {"password": "userpass2", "role": "user"},
+    "user3": {"password": "userpass3", "role": "user"},
+}
+
+# Track failed login attempts
+failed_attempts = {}
+
+# Define the logs file path
+LOGS_FILE = 'intrusion_logs.json'
+
+# Initialize or load intrusion logs from file
+def load_intrusion_logs():
+    if os.path.exists(LOGS_FILE):
+        try:
+            with open(LOGS_FILE, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print("error ocured while loading the intrusion logas json")
+            return []
+    return []
+
+# Save intrusion logs to file
+def save_intrusion_logs(logs):
+    with open(LOGS_FILE, 'w') as f:
+        json.dump(logs, f, indent=4)
+
+# Load intrusion logs at startup
+intrusion_logs = load_intrusion_logs()
+
+# Predict intrusion using the ML model
+def predict_intrusion(username, password, attempts):
+    input_features = np.array([[len(username), len(password), attempts]])
+    prediction = model.predict(input_features)
+    return prediction[0]  # 0 = Safe, 1 = Intrusion
+
+@app.route('/')
+def home():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = users.get(username)
+
+        if not user:
+            flash("⚠️ User does not exist!", "danger")
+            return redirect('/')
+
+        # Initialize failed attempts if not present
+        if username not in failed_attempts:
+            failed_attempts[username] = 0
+
+        if user['password'] == password:
+            session['user'] = username
+            session['role'] = user['role']
+            failed_attempts[username] = 0  # Reset on successful login
+
+            if user['role'] == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            elif user['role'] == 'user':
+                return redirect(url_for('user_dashboard'))
+        else:
+            failed_attempts[username] += 1
+            prediction = predict_intrusion(username, password, failed_attempts[username])
+
+            if prediction == 1 or failed_attempts[username] >= 3:
+                # Add new intrusion log
+                log_entry = {
+                    "username": username,
+                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "reason": "Multiple failed login attempts"
+                }
+                intrusion_logs.append(log_entry)
+                # Save logs to file immediately
+                save_intrusion_logs(intrusion_logs)
+                
+                flash("🚨 Intrusion Detected! Access Denied.", "danger")
+                return redirect('/')
+            else:
+                flash(f"❌ Wrong Password! Attempts left: {3 - failed_attempts[username]}", "warning")
+                return redirect('/')
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'user' in session and session['role'] == "admin":
+        # Always reload logs from file to ensure we have the latest data
+        global intrusion_logs
+        intrusion_logs = load_intrusion_logs()
+        return render_template('admin_dashboard.html', logs=intrusion_logs)
+    else:
+        flash("Unauthorized Access!", "danger")
+        return redirect('/')
+
+@app.route('/user_dashboard')
+def user_dashboard():
+    if 'user' in session and session['role'] == "user":
+        return render_template('user_dashboard.html', username=session['user'])
+    else:
+        flash("Unauthorized Access!", "danger")
+        return redirect('/')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    session.pop('role', None)
+    flash("You have been logged out.", "info")
+    return redirect('/')
+
+@app.route('/logout1')
+def logout1():
+    flash("You have been logged out.", "info")
+    return redirect('/admin_dashboard')
+
+# ---------- Dataset Encryption & Viewing ----------
+
+# Global dictionary to hold encrypted datasets
 datasets = {}
 
 def load_and_encrypt_dataset(file_path):
     df = pd.read_excel(file_path)
     headings = list(df.columns)
-    # Encrypt each cell as a string
-    encrypted_data = df.applymap(lambda x: encrypt_data(str(x))).values.tolist()
+    encrypted_data = df.astype(str).map(encrypt_data).values.tolist()
     return headings, encrypted_data
 
-# Pre-load datasets for each category
+# Load encrypted datasets
 datasets["vitals"] = {}
 datasets["vitals"]["headings"], datasets["vitals"]["data"] = load_and_encrypt_dataset('dataset/vitals.xlsx')
 
@@ -27,10 +167,13 @@ datasets["medication"]["headings"], datasets["medication"]["data"] = load_and_en
 datasets["devices"] = {}
 datasets["devices"]["headings"], datasets["devices"]["data"] = load_and_encrypt_dataset('dataset/devices.xlsx')
 
-@app.route('/')
+@app.route('/dashboard')
 def dashboard():
-    """Main dashboard with 4 emoji buttons."""
-    return render_template('dashboard.html')
+    if 'user' in session and session['role'] == "admin":
+        return render_template('dashboard.html')
+    else:
+        flash("Unauthorized Access!", "danger")
+        return redirect('/')
 
 @app.route('/dataset/<category>', methods=['GET', 'POST'])
 def view_dataset(category):
@@ -46,7 +189,6 @@ def view_dataset(category):
         key = request.form['decryption_key']
         # Attempt to decrypt each cell using the provided key
         decrypted_data = [[decrypt_data(cell, key) for cell in row] for row in encrypted_data]
-        # Check if decryption is successful (assuming the first cell should not be "Invalid Key")
         if "Invalid Key" not in decrypted_data[0]:
             encrypted_data = decrypted_data
             decrypted = True
@@ -56,6 +198,18 @@ def view_dataset(category):
                            headings=headings,
                            encrypted_data=encrypted_data,
                            decrypted=decrypted)
+
+# Route to clear intrusion logs (admin only)
+@app.route('/clear_logs', methods=['POST'])
+def clear_logs():
+    if 'user' in session and session['role'] == "admin":
+        global intrusion_logs
+        intrusion_logs = []
+        save_intrusion_logs(intrusion_logs)
+        flash("All intrusion logs have been cleared.", "success")
+    else:
+        flash("Unauthorized Access!", "danger")
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)
