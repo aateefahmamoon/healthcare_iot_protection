@@ -6,6 +6,7 @@ import pandas as pd
 import random
 from cryptography.fernet import Fernet
 from encryption import init_encryption, encrypt_data, decrypt_data
+import os  # 👈 ADDED
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for session management
@@ -35,6 +36,13 @@ failed_attempts = {}
 # Store intrusion logs (only accessible by admin)
 intrusion_logs = []
 
+# 👇 ADDED FUNCTION
+def save_intrusion_log(entry):
+    os.makedirs("intrusion_logs", exist_ok=True)
+    with open("intrusion_logs/suspicious_logs.txt", "a") as file:
+        line = f"{entry['username']},{entry['time']},{entry['reason']}\n"
+        file.write(line)
+
 # Predict intrusion using the ML model
 def predict_intrusion(username, password, attempts):
     input_features = np.array([[len(username), len(password), attempts]])
@@ -57,14 +65,13 @@ def login():
             flash("⚠️ User does not exist!", "danger")
             return redirect('/')
 
-        # Initialize failed attempts if not present
         if username not in failed_attempts:
             failed_attempts[username] = 0
 
         if user['password'] == password:
             session['user'] = username
             session['role'] = user['role']
-            failed_attempts[username] = 0  # Reset on successful login
+            failed_attempts[username] = 0
 
             if user['role'] == 'admin':
                 return redirect(url_for('admin_dashboard'))
@@ -75,11 +82,13 @@ def login():
             prediction = predict_intrusion(username, password, failed_attempts[username])
 
             if prediction == 1 or failed_attempts[username] >= 3:
-                intrusion_logs.append({
+                entry = {
                     "username": username,
                     "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "reason": "Multiple failed login attempts"
-                })
+                }
+                intrusion_logs.append(entry)
+                save_intrusion_log(entry)  # 👈 ADDED
                 flash("🚨 Intrusion Detected! Access Denied.", "danger")
                 return redirect('/')
             else:
@@ -89,7 +98,20 @@ def login():
 @app.route('/admin_dashboard')
 def admin_dashboard():
     if 'user' in session and session['role'] == "admin":
-        return render_template('admin_dashboard.html', logs=intrusion_logs)
+        logs = []  # 👈 ADDED block below
+
+        log_file_path = "intrusion_logs/suspicious_logs.txt"
+        if os.path.exists(log_file_path):
+            with open(log_file_path, "r") as file:
+                for line in file:
+                    parts = line.strip().split(',')
+                    if len(parts) == 3:
+                        logs.append({
+                            "username": parts[0],
+                            "time": parts[1],
+                            "reason": parts[2]
+                        })
+        return render_template('admin_dashboard.html', logs=logs)
     else:
         flash("Unauthorized Access!", "danger")
         return redirect('/')
@@ -116,7 +138,6 @@ def logout1():
 
 # ---------- Dataset Encryption & Viewing ----------
 
-# Global dictionary to hold encrypted datasets
 datasets = {}
 
 def load_and_encrypt_dataset(file_path):
@@ -125,7 +146,6 @@ def load_and_encrypt_dataset(file_path):
     encrypted_data = df.astype(str).map(encrypt_data).values.tolist()
     return headings, encrypted_data
 
-# Load encrypted datasets
 datasets["vitals"] = {}
 datasets["vitals"]["headings"], datasets["vitals"]["data"] = load_and_encrypt_dataset('dataset/vitals.xlsx')
 
@@ -147,7 +167,6 @@ def dashboard():
 
 @app.route('/dataset/<category>', methods=['GET', 'POST'])
 def view_dataset(category):
-    """View and optionally decrypt the selected dataset."""
     if category not in datasets:
         return "Dataset not found", 404
 
@@ -157,7 +176,6 @@ def view_dataset(category):
 
     if request.method == 'POST':
         key = request.form['decryption_key']
-        # Attempt to decrypt each cell using the provided key
         decrypted_data = [[decrypt_data(cell, key) for cell in row] for row in encrypted_data]
         if "Invalid Key" not in decrypted_data[0]:
             encrypted_data = decrypted_data
@@ -169,7 +187,6 @@ def view_dataset(category):
                            encrypted_data=encrypted_data,
                            decrypted=decrypted)
 
-# New route for viewing medical records
 @app.route('/view_medical_records')
 def view_medical_records():
     return render_template('view_medical_records.html')

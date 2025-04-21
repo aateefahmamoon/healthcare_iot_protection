@@ -161,16 +161,18 @@
                     <th>Time</th>
                     <th>Reason</th>
                 </tr>
+                {% for log in logs %}
                 <tr>
-                    <td>user1</td>
-                    <td>2025-04-22 10:00 AM</td>
-                    <td>Multiple failed login attempts</td>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.time }}</td>
+                    <td>{{ log.reason }}</td>
                 </tr>
+                {% endfor %}
+                {% if logs|length == 0 %}
                 <tr>
-                    <td>user2</td>
-                    <td>2025-04-21 03:30 PM</td>
-                    <td>Suspicious IP detected</td>
+                    <td colspan="3">No suspicious activity recorded.</td>
                 </tr>
+                {% endif %}
             </table>
         </div>
     </div>
