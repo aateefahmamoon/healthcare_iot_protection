@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e1f7ff;
+            margin: 0;
+            padding: 0;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            margin: 0 5px;
+            border-radius: 10px;
+            background-color: #66c2ff;
+            color: white;
+        }
+        .tab:hover {
+            background-color: #4db8ff;
+        }
+        .active {
+            background-color: #4db8ff;
+            font-weight: bold;
+        }
+        .card {
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid #ccc;
+            width: 60%;
+            border-radius: 15px;
+            background-color: white;
+            box-shadow: 0px 2px 15px rgba(0,0,0,0.1);
+        }
+        .button-link {
+            padding: 12px 24px;
+            text-decoration: none;
+            color: white;
+            background-color: #66c2ff;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        footer {
+            background-color: #66c2ff;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 14px;
+        }
+        .logout {
+            padding: 12px 20px;
+            margin-top: 20px;
+            background-color: #ff4d4d;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .logout:hover {
+            background-color: #ff1a1a;
+        }
+        #medical .card {
+            width: 40%;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #ffffff;
+            box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td {
+            text-align: center;
+        }
+    </style>
+    <script>
+        function showTab(tabName) {
+            const sections = document.querySelectorAll(".tab-content");
+            sections.forEach(sec => sec.style.display = 'none');
+            document.getElementById(tabName).style.display = 'block';
+
+            const tabs = document.querySelectorAll(".tab");
+            tabs.forEach(t => t.classList.remove("active"));
+            document.getElementById("tab-" + tabName).classList.add("active");
+        }
+
+        function logout() {
+            // Redirecting to the login page
+            window.location.href = "login.html";
+        }
+
+        window.onload = function() {
+            showTab('welcome');
+        };
+
+
+        function logout() {
+    // Redirecting to the login page
+    window.location.href = "/logout";  // This will redirect to the logout route in your Flask app
+}
+
+    </script>
+</head>
+<body>
+    <h1>Welcome, Admin</h1>
+    <div class="tabs">
+        <div id="tab-welcome" class="tab" onclick="showTab('welcome')">Welcome</div>
+        <div id="tab-about" class="tab" onclick="showTab('about')">About Us</div>
+        <div id="tab-suspicious" class="tab" onclick="showTab('suspicious')">Suspicious Logs</div>
+        <div id="tab-medical" class="tab" onclick="showTab('medical')">View Medical Recordings</div>
+        <div id="tab-logout" class="tab" onclick="logout()">🚪 Logout</div>
+
+    </div>
+
+    <div id="welcome" class="tab-content">
+        <div class="card">
+            <h2>Welcome Admin!</h2>
+            <p>You are logged in as administrator.</p>
+        </div>
+    </div>
+
+    <div id="about" class="tab-content" style="display:none">
+        <div class="card">
+            <p>Welcome to our Hospital Web Application — a secure and intelligent platform designed to assist medical professionals in efficiently managing patient records and clinical data.</p>
+            <p>Our system ensures that doctors have reliable, real-time access to patient diagnoses, treatment plans, and medical history — all while maintaining strict data privacy standards. We leverage advanced encryption techniques to protect sensitive medical information from unauthorized access or cyber threats.</p>
+            <p>Designed with both security and usability in mind, our platform is tailored to meet the modern needs of hospitals and healthcare providers, supporting better care through smarter technology.</p>
+            <h3><b>Security Monitoring & Threat Detection</b></h3>
+            <p>As part of our commitment to cybersecurity, this dashboard provides administrators with real-time alerts on suspicious login attempts and system activity.</p>
+            <p>Our integrated machine learning models analyze login patterns to identify potential threats, allowing hospital staff to respond proactively and protect sensitive patient data.</p>
+            <p>Admins can also review logs, track user behavior, and manage system access to ensure data remains safe and only accessible by authorized personnel.</p>
+        </div>
+    </div>
+
+    <div id="suspicious" class="tab-content" style="display:none">
+        <div class="card">
+            <h3>Suspicious Login Attempts</h3>
+            <table>
+                <tr>
+                    <th>Username</th>
+                    <th>Time</th>
+                    <th>Reason</th>
+                </tr>
+                <tr>
+                    <td>user1</td>
+                    <td>2025-04-22 10:00 AM</td>
+                    <td>Multiple failed login attempts</td>
+                </tr>
+                <tr>
+                    <td>user2</td>
+                    <td>2025-04-21 03:30 PM</td>
+                    <td>Suspicious IP detected</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div id="medical" class="tab-content" style="display:none">
+        <div class="card">
+            <p>To view medical records:</p>
+            <a href="{{ url_for('dashboard') }}" class="button-link">View Records</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>📍 Smart Hospital | 📞 +91-1234567890 | 📧 support@smarthospital.ai</p>
+    </footer>
+</body>
+</html>
