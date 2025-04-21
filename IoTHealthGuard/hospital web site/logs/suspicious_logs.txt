@@ -1,0 +1,46 @@
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
+    user_ip = request.remote_addr  # Get user IP
+    
+    # Check if user is blocked
+    if username in login_attempts and login_attempts[username]['blocked']:
+        if time.time() - login_attempts[username]['block_time'] < 60:  # 1 min block
+            return render_template('login.html', message='Too many failed attempts! Try again later.')
+        else:
+            login_attempts[username] = {'count': 0, 'blocked': False}  # Reset block
+
+    # ML Intrusion Detection Prediction
+    username_length = len(username)
+    password_length = len(password)
+    failed_attempts = login_attempts.get(username, {'count': 0})['count']
+
+    prediction = intrusion_model.predict([[username_length, password_length, failed_attempts]])
+
+    if prediction == 1:
+        with open(suspicious_activities, 'a') as file:
+            file.write(f'Suspicious login attempt by {username} from {user_ip} at {time.ctime()}\\n')
+        return render_template('login.html', message='Intrusion Detected! Access Denied.')
+
+    # Mock authentication (Replace with real DB check)
+    if username == 'admin' and password == 'password123':
+        session['user'] = username
+        login_attempts[username] = {'count': 0, 'blocked': False}  # Reset attempts
+        return redirect('/dashboard')
+
+    # If wrong password
+    login_attempts[username] = login_attempts.get(username, {'count': 0, 'blocked': False})
+    login_attempts[username]['count'] += 1
+
+    if login_attempts[username]['count'] >= 2:
+        login_attempts[username]['blocked'] = True
+        login_attempts[username]['block_time'] = time.time()
+        return render_template('login.html', message='Too many failed attempts! User blocked for 1 minute.')
+
+    return render_template('login.html', message='Incorrect Username or Password! Try again.')
+Suspicious login attempt by admin from 127.0.0.1 at Mon Mar 24 23:05:12 2025
+Suspicious login attempt by admin from 127.0.0.1 at Mon Mar 24 23:05:38 2025
+Suspicious login attempt by user1 from 127.0.0.1 at Mon Mar 24 23:05:52 2025
+Suspicious login attempt by admin from 127.0.0.1 at Mon Mar 24 23:10:53 2025
+Suspicious login attempt by user1 from 127.0.0.1 at Mon Mar 24 23:11:12 2025

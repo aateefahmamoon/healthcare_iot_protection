@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category }} Dataset Viewer</title>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        /* Header with Dashboard link and decrypt button */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f2f2f2;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+        }
+        .dashboard-link {
+            font-size: 16px;
+            text-decoration: none;
+            color: #333;
+        }
+        .decrypt-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        /* Main content styling */
+        .content {
+            text-align: center;
+            margin: 30px;
+        }
+        .category-emoji {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        .category-heading {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Popup styling */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('dashboard') }}" class="dashboard-link">← Dashboard</a>
+        {% if not decrypted %}
+            <button class="decrypt-btn" onclick="openPopup()">Decrypt Data</button>
+        {% endif %}
+    </header>
+    <div class="content">
+        <!-- Central heading with relevant emoji -->
+        <div class="category-emoji">
+            {% if category.lower() == 'vitals' %}
+                ❤️
+            {% elif category.lower() == 'careplan' %}
+                📝
+            {% elif category.lower() == 'medication' %}
+                💊
+            {% elif category.lower() == 'devices' %}
+                📱
+            {% else %}
+                📊
+            {% endif %}
+        </div>
+        <div class="category-heading">{{ category }} Dataset Viewer</div>
+
+        <!-- Data Table -->
+        <table>
+            <thead>
+                <tr>
+                    {% for heading in headings %}
+                        <th>{{ heading }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in encrypted_data %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Popup for decryption key entry -->
+    <div id="popup">
+        <h3>Enter Decryption Key</h3>
+        <form method="POST">
+            <input type="text" name="decryption_key" required>
+            <button type="submit">Submit</button>
+        </form>
+        <button onclick="closePopup()">Cancel</button>
+    </div>
+
+    {% if decrypted %}
+        <script>alert("Data successfully decrypted!");</script>
+    {% endif %}
+</body>
+</html>

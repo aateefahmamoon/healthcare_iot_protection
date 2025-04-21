@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard - Smart Hospital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f8fb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #0077b6;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        header img {
+            height: 50px;
+        }
+
+        nav {
+            background-color: #023e8a;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #0077b6;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0096c7;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        section {
+            padding: 2rem;
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        .about-box {
+            background-color: #caf0f8;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        footer {
+            background-color: #023e8a;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
+
+    <script>
+        function showSection(id) {
+            document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+            document.getElementById(id).classList.add("active");
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Smart Hospital</h1>
+    </header>
+
+    <nav>
+        <a href="#" onclick="showSection('welcome')">📢 Welcome</a>
+        <a href="#" onclick="showSection('med_records')">🗂️ View Medical Recordings</a>
+        <!-- <a href="#" onclick="showSection('appointments')">📅 Appointments</a>
+        <a href="#" onclick="showSection('contact_doctor')">💬 Contact Doctor</a>
+        <a href="#" onclick="showSection('health_tips')">🍎 Health Tips</a> -->
+        <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    </nav>
+
+    <main>
+        <section id="welcome" class="active">
+            <h2>Hello, {{ username }}!</h2>
+            <p>You're logged in as a patient. Here, you can securely view your personal medical records and IoT health device data.</p>
+            <p>If you believe there has been any unauthorized access, please report it to the admin immediately.</p>
+        </section>
+
+        <section id="med_records">
+            <h2>View Medical Recordings (Encryption/Decryption)</h2>
+            <a href="{{ url_for('dashboard') }}">🔍 Go to Dataset Dashboard</a>
+        </section>
+
+        <!-- <section id="appointments">
+            <h2>📅 Your Appointments</h2>
+            <p>You currently have no upcoming appointments. Schedule one through our portal!</p>
+        </section> -->
+
+        <section id="contact_doctor">
+            <h2>💬 Contact Admin</h2>
+            <p>Need to speak with your doctor? Message them securely through our contact system.</p>
+        </section>
+
+        <!-- <section id="health_tips">
+            <h2>🍎 Health Tips</h2>
+            <ul>
+                <li>Stay hydrated and drink plenty of water.</li>
+                <li>Get 8 hours of sleep every night.</li>
+                <li>Regularly monitor your vital signs through the hospital dashboard.</li>
+                <li>Don't forget to exercise at least 30 minutes a day.</li>
+            </ul>
+        </section> -->
+    </main>
+
+    <footer>
+        <p>📍 Smart Hospital | 📞 +91-1234567890 | 📧 support@smarthospital.ai</p>
+    </footer>
+</body>
+</html>
