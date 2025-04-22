@@ -24,10 +24,18 @@ with open('intrusion_model.pkl', 'rb') as f:
 
 # Sample user database (username, password, role)
 users = {
-    "admin": {"password": "admin123", "role": "admin"},
-    "user1": {"password": "userpass1", "role": "user"},
-    "user2": {"password": "userpass2", "role": "user"},
-    "user3": {"password": "userpass3", "role": "user"},
+    "admin": {"password": "admin123", "role": "admin", "status": "unblocked"},
+    "admin2": {"password": "admin456", "role": "admin", "status": "unblocked"},
+    "user1": {"password": "userpass1", "role": "user", "status": "unblocked"},
+    "user2": {"password": "userpass2", "role": "user", "status": "unblocked"},
+    "user3": {"password": "userpass3", "role": "user", "status": "unblocked"},
+    "john_doe": {"password": "johndoe321", "role": "user", "status": "unblocked"},
+    "alice_99": {"password": "alice1999", "role": "user", "status": "unblocked"},
+    "mike_p": {"password": "mikepass", "role": "user", "status": "unblocked"},
+    "sara_k": {"password": "sarak123", "role": "user", "status": "unblocked"},
+    "kevin87": {"password": "kev!n87", "role": "user", "status": "unblocked"},
+    "emma.green": {"password": "greenemma22", "role": "user", "status": "unblocked"},
+    "rajiv": {"password": "rajiv2025", "role": "user", "status": "unblocked"},
 }
 
 # Track failed login attempts
@@ -51,6 +59,8 @@ def predict_intrusion(username, password, attempts):
 
 @app.route('/')
 def home():
+    if request.args.get('logged_out'):
+        flash("You have been logged out.", "info")
     return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
@@ -60,6 +70,11 @@ def login():
         password = request.form['password']
 
         user = users.get(username)
+
+        if user["status"] == "blocked":
+            flash("🚫 Your account is blocked. Please contact the administrator.", "danger")
+            return redirect('/')
+
 
         if not user:
             flash("⚠️ User does not exist!", "danger")
@@ -84,12 +99,13 @@ def login():
             if prediction == 1 or failed_attempts[username] >= 3:
                 entry = {
                     "username": username,
-                    "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "reason": "Multiple failed login attempts"
+                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "reason": "Multiple failed login attempts"
                 }
                 intrusion_logs.append(entry)
-                save_intrusion_log(entry)  # 👈 ADDED
-                flash("🚨 Intrusion Detected! Access Denied.", "danger")
+                save_intrusion_log(entry)
+                users[username]["status"] = "blocked"  # 👈 block user
+                flash("🚨 Intrusion Detected! Your account is now blocked.", "danger")
                 return redirect('/')
             else:
                 flash(f"❌ Wrong Password! Attempts left: {3 - failed_attempts[username]}", "warning")
@@ -128,13 +144,29 @@ def user_dashboard():
 def logout():
     session.pop('user', None)
     session.pop('role', None)
-    flash("You have been logged out.", "info")
-    return redirect('/')
+    return redirect(url_for('home', logged_out=True))
 
 @app.route('/logout1')
 def logout1():
     flash("You have been logged out.", "info")
     return redirect('/admin_dashboard')
+
+@app.route('/blocked_users', methods=['GET'])
+def blocked_users():
+    if 'user' in session and session['role'] == "admin":
+        blocked = [{"username": u} for u, data in users.items() if data["status"] == "blocked"]
+        return {"users": blocked}
+    return {"error": "Unauthorized"}, 403
+
+@app.route('/unblock_user/<username>', methods=['POST'])
+def unblock_user(username):
+    if 'user' in session and session['role'] == "admin":
+        if username in users:
+            users[username]["status"] = "unblocked"
+            return {"success": True}
+    return {"error": "Unauthorized"}, 403
+
+
 
 # ---------- Dataset Encryption & Viewing ----------
 

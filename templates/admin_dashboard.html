@@ -94,6 +94,7 @@
             text-align: center;
         }
     </style>
+
     <script>
         function showTab(tabName) {
             const sections = document.querySelectorAll(".tab-content");
@@ -103,23 +104,47 @@
             const tabs = document.querySelectorAll(".tab");
             tabs.forEach(t => t.classList.remove("active"));
             document.getElementById("tab-" + tabName).classList.add("active");
+
+            if (tabName === 'user') {
+                loadBlockedUsers();
+            }
         }
 
         function logout() {
-            // Redirecting to the login page
-            window.location.href = "login.html";
+            window.location.href = "/logout";
         }
 
         window.onload = function() {
             showTab('welcome');
         };
 
+        function loadBlockedUsers() {
+            fetch('/blocked_users')
+                .then(res => res.json())
+                .then(data => {
+                    const table = document.querySelector("#blocked-users-table tbody");
+                    table.innerHTML = '';
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.username}</td>
+                            <td><button onclick="unblockUser('${user.username}')">Unblock</button></td>
+                        `;
+                        table.appendChild(row);
+                    });
+                });
+        }
 
-        function logout() {
-    // Redirecting to the login page
-    window.location.href = "/logout";  // This will redirect to the logout route in your Flask app
-}
-
+        function unblockUser(username) {
+            fetch(`/unblock_user/${username}`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(() => {
+                loadBlockedUsers();
+                alert(`${username} has been unblocked.`);
+            });
+        }
     </script>
 </head>
 <body>
@@ -128,9 +153,9 @@
         <div id="tab-welcome" class="tab" onclick="showTab('welcome')">Welcome</div>
         <div id="tab-about" class="tab" onclick="showTab('about')">About Us</div>
         <div id="tab-suspicious" class="tab" onclick="showTab('suspicious')">Suspicious Logs</div>
+        <div id="tab-user" class="tab" onclick="showTab('user')">User Management</div>
         <div id="tab-medical" class="tab" onclick="showTab('medical')">View Medical Recordings</div>
         <div id="tab-logout" class="tab" onclick="logout()">🚪 Logout</div>
-
     </div>
 
     <div id="welcome" class="tab-content">
@@ -173,6 +198,23 @@
                     <td colspan="3">No suspicious activity recorded.</td>
                 </tr>
                 {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <div id="user" class="tab-content" style="display:none">
+        <div class="card">
+            <h3>Blocked Users</h3>
+            <table id="blocked-users-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Blocked users will be inserted here via JS -->
+                </tbody>
             </table>
         </div>
     </div>
