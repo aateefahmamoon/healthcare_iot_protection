@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Hospital Website</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f8fb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #0077b6;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        header img {
+            height: 50px;
+        }
+
+        nav {
+            background-color: #023e8a;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            background-color: #0077b6;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0096c7;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        section {
+            padding: 2rem;
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        .about-box {
+            background-color: #caf0f8;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        footer {
+            background-color: #023e8a;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" alt="Hospital Logo">
+        <h1>Smart Hospital Admin Panel</h1>
+    </header>
+
+    <nav>
+        <a href="#" onclick="showSection('about')">📢 About Us</a>
+        <a href="#" onclick="showSection('user_mgmt')">👥 User Management</a>
+        <a href="#" onclick="showSection('suspicious_logs')">🕵️ Suspicious Logs</a>
+        <a href="#" onclick="showSection('med_records')">🗂️ View Medical Recordings</a>
+        <a href="#" onclick="showSection('alerts')">🚨 Alerts</a>
+        <a href="#" onclick="showSection('logs')">📜 System Logs</a>
+        <a href="{{ url_for('logout') }}">🚪 Logout</a>
+    </nav>
+
+    <main>
+        <section id="about" class="active">
+            <div class="about-box">
+                <h2>About Us</h2>
+                <p>Welcome to Smart Hospital — where even your data gets better treatment than you do! 🏥💻<br>
+                We encrypt vitals, decrypt stress, detect intrusions faster than your brain detects hunger, and block hackers harder than you block your ex. 💔🔒</p>
+            </div>
+        </section>
+
+        <section id="user_mgmt">
+            <h2>User Management</h2>
+            <p>Manage users here... (This section will later contain a list of users with admin functions)</p>
+        </section>
+
+        <section id="suspicious_logs">
+            <h2>Suspicious Logs</h2>
+            <h3>📜 Intrusion Logs</h3>
+            <table>
+                <tr>
+                    <th>Username</th>
+                    <th>Time</th>
+                    <th>Reason</th>
+                </tr>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.time }}</td>
+                    <td>{{ log.reason }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+
+        <section id="med_records">
+            <h2>View Medical Recordings (Encryption/Decryption)</h2>
+            <a href="{{ url_for('dashboard') }}">🔍 Go to Dataset Dashboard</a>
+        </section>
+
+        <section id="alerts">
+            <h2>Alerts</h2>
+            <p>No alerts to display at the moment. Everything is chill 😎</p>
+        </section>
+
+        <section id="logs">
+            <h2>System Logs</h2>
+            <p>Here you can view application-level logs and system messages...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>📍 Smart Hospital | 📞 +91-1234567890 | 📧 support@smarthospital.ai</p>
+    </footer>
+
+    <script>
+        function showSection(id) {
+            const sections = document.querySelectorAll('main section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+    </script>
+</body>
+</html>
