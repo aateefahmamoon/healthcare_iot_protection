@@ -8,6 +8,49 @@ from cryptography.fernet import Fernet
 from encryption import init_encryption, encrypt_data, decrypt_data
 import os  # 👈 ADDED
 
+import smtplib
+from email.mime.text import MIMEText
+
+def send_block_alert_email(username):
+    sender_email = "aateefahmamoon@gmail.com"
+    receiver_email = "aateefahmamoon@gmail.com"
+    app_password = "mvvd gyvj bnsw uomx"  
+
+    subject = f"🚨 [Smart Hospital] Security Alert: User '{username}' Blocked Due to Suspicious Activity"
+
+    body = f"""
+Dear Admin,
+
+We wanted to alert you that the user account **'{username}'** has been automatically blocked by the Smart Hospital Intrusion Detection System due to multiple suspicious login attempts.
+
+📌 **Reason**: Multiple failed login attempts  
+📅 **Time of Block**: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+The user has been restricted from further access until reviewed by an administrator.
+
+Please log in to the Admin Dashboard to review the activity and take necessary action.
+
+---
+
+Thank you,  
+Smart Hospital Security System  
+🔐 Keeping healthcare secure, one login at a time.
+"""
+
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(sender_email, app_password)
+            smtp.sendmail(sender_email, receiver_email, msg.as_string())
+        print(f"📧 Email sent successfully for blocked user: {username}")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for session management
 
@@ -105,6 +148,7 @@ def login():
                 intrusion_logs.append(entry)
                 save_intrusion_log(entry)
                 users[username]["status"] = "blocked"  # 👈 block user
+                send_block_alert_email(username)
                 flash("🚨 Intrusion Detected! Your account is now blocked.", "danger")
                 return redirect('/')
             else:

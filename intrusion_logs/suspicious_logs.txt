@@ -4,3 +4,6 @@ user1,2025-04-22 07:47:51,Multiple failed login attempts
 user1,2025-04-22 08:05:48,Multiple failed login attempts
 user1,2025-04-22 08:11:25,Multiple failed login attempts
 user1,2025-04-22 08:12:30,Multiple failed login attempts
+user1,2025-04-22 08:36:11,Multiple failed login attempts
+user1,2025-04-22 08:37:30,Multiple failed login attempts
+john_doe,2025-04-22 08:42:41,Multiple failed login attempts
